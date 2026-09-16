@@ -1,0 +1,8 @@
+{
+  "name": "Materialnachweis+Preise",
+  "short_name": "Material+Preise",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#fff"
+}
