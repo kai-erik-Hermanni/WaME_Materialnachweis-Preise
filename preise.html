@@ -1,12 +1,40 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Interne Preisverwaltung</title><style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f2f4f7;color:#111827}header{background:#fff;border-bottom:1px solid #e5e7eb;padding:18px}header div,main{max-width:920px;margin:auto}h1{margin:0;font-size:24px}small{color:#64748b}main{padding:16px}.card{background:#fff;border-radius:18px;padding:20px}.warning{border:2px solid #c62828;background:#fff5f5;padding:12px;border-radius:10px;font-weight:700;margin-bottom:16px}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}label{display:block;font-size:13px;font-weight:700;color:#475569;margin-bottom:5px}select,input{width:100%;min-height:44px;border:1px solid #aeb8c4;border-radius:8px;background:#fff;padding:8px 10px;font-size:16px}.row{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #edf0f3}.meta{font-size:13px;color:#64748b}.saved{margin-top:12px;color:#166534;font-weight:700}.back{display:inline-block;margin-top:16px;padding:12px 16px;border-radius:9px;background:#111827;color:#fff;text-decoration:none;font-weight:700}@media(max-width:650px){.toolbar,.row{grid-template-columns:1fr}}
 .price-input-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 .price-input-actions button{min-height:44px;border:0;border-radius:8px;background:#111827;color:#fff;font-weight:700;padding:0 14px}
-</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.7</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
+
+.fixed-back-bar{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:9999;
+  display:flex;
+  justify-content:center;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);
+  border-top:1px solid #d7dce3;
+  box-shadow:0 -3px 12px rgba(0,0,0,.08);
+}
+.fixed-back-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:46px;
+  padding:0 22px;
+  border-radius:10px;
+  background:#111827;
+  color:#fff!important;
+  text-decoration:none!important;
+  font-weight:700;
+  text-align:center;
+}
+body{padding-bottom:82px!important;}
+@media print{.fixed-back-bar{display:none!important;} body{padding-bottom:0!important;}}
+
+</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.10</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
 <p class="meta">Interne Stundensätze für die Berechnung der Arbeitskosten.</p>
 <div class="row"><div><strong>Herr Marco Kreisz</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateMarco" inputmode="decimal"><button type="button" onclick="saveRate('Herr Marco Kreisz',$('rateMarco').value)">Übernehmen</button></div></div></div>
 <div class="row"><div><strong>Herr Tobias Roth</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateRoth" inputmode="decimal"><button type="button" onclick="saveRate('Herr Tobias Roth',$('rateRoth').value)">Übernehmen</button></div></div></div>
 <div class="row"><div><strong>Herr Tobias Köhler</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateKoehler" inputmode="decimal"><button type="button" onclick="saveRate('Herr Tobias Köhler',$('rateKoehler').value)">Übernehmen</button></div></div></div>
-<div class="saved" id="rateSaved" style="display:none">Stundensatz übernommen und gespeichert.</div></section><a class="back" href="index.html">← Zurück zum Materialnachweis</a></main><script>const DATA={"Edelstahl":{"items":["Ü-Nippel","Ü-Muffe","Bogen 90° i.a.","Bogen 90° i.i.","Bogen 45° i.a.","Bogen 45° i.i.","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["18 mm","22 mm","28 mm","35 mm","42 mm","54 mm"]},"Kupfer":{"items":["Ü-Nippel","Ü-Muffe","Bogen 90° i.a.","Bogen 90° i.i.","Bogen 45° i.a.","Bogen 45° i.i.","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["18 mm","22 mm","28 mm","35 mm","42 mm","54 mm"]},"Rotguss":{"items":["Reduktion","Red.-Muffe","Winkel 90° i.a.","Winkel 90° i.i.","Winkel 45° i.a.","Winkel 45° i.i.","Rohrnippel","Doppelnippel","Muffe","Stopfen","Kappe","T-Stück","Hahnverlängerung"],"dimensions":["1/8\"","1/4\"","3/8\"","1/2\"","3/4\"","1\"","1 1/4\"","1 1/2\"","2\"","2 1/2\"","3\"","4\""]},"Plasson PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Isiflo Ecoline PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Isiflo Messing PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Roth-System":{"items":["Ü-Nippel","Ü-Muffe","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["17 mm","20 mm","25 mm","32 mm"]},"Ventile / Armaturen":{"items":["Schrägsitzventil o.E.","Schrägsitzventil m.E.","KFR-Ventil o.E.","KFR-Ventil m.E.","Wasserzählerbügel","Ventiloberteil","KFR-Ventiloberteil","Zapfhahn","Kugelhahn / KFE-Hahn","Steckschieber","Gewindeschieber","Flanschschieber","Schiebergestänge","Friagrip","Multi-Joint","Hauseinführung"],"dimensions":["DN15","DN20","DN25","DN32","DN40","DN50","DN65","DN80","DN100"]},"Sonstiges":{"items":["Rohrschellen","Stockschrauben - M8","Wasserfilter","Filterverschraubung","Brunnenschaum","Straßenkappe für Hausanschluss","Unterlegplatte für Straßenkappe","KG Rohr für Gestänge"],"dimensions":["ohne Dimension"]}};const KEY='materialnachweis-preise-katalog-v1',$=id=>document.getElementById(id);let prices={};try{prices=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}function key(g,m,d,d2=''){return [g,m,d||'',d2||''].join('||')}function specialDims(group,item){
+<div class="saved" id="rateSaved" style="display:none">Stundensatz übernommen und gespeichert.</div></section></main><script>const DATA={"Edelstahl":{"items":["Ü-Nippel","Ü-Muffe","Bogen 90° i.a.","Bogen 90° i.i.","Bogen 45° i.a.","Bogen 45° i.i.","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["18 mm","22 mm","28 mm","35 mm","42 mm","54 mm"]},"Kupfer":{"items":["Ü-Nippel","Ü-Muffe","Bogen 90° i.a.","Bogen 90° i.i.","Bogen 45° i.a.","Bogen 45° i.i.","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["18 mm","22 mm","28 mm","35 mm","42 mm","54 mm"]},"Rotguss":{"items":["Reduktion","Red.-Muffe","Winkel 90° i.a.","Winkel 90° i.i.","Winkel 45° i.a.","Winkel 45° i.i.","Rohrnippel","Doppelnippel","Muffe","Stopfen","Kappe","T-Stück","Hahnverlängerung"],"dimensions":["1/8\"","1/4\"","3/8\"","1/2\"","3/4\"","1\"","1 1/4\"","1 1/2\"","2\"","2 1/2\"","3\"","4\""]},"Plasson PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Isiflo Ecoline PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Isiflo Messing PE":{"items":["Ü-Verschraubung AG","Ü-Verschraubung IG","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","T-Stück","Kupplung","Reparaturkupplung","Endkappe","Rohr","Red.-Kupplung"],"dimensions":["20","25","32","40","50","63"]},"Roth-System":{"items":["Ü-Nippel","Ü-Muffe","Ü-Winkel 90° AG","Ü-Winkel 90° IG","Winkel 90°","Winkel 45°","Muffe","Kappe","T-Stück","Rohr"],"dimensions":["17 mm","20 mm","25 mm","32 mm"]},"Ventile / Armaturen":{"items":["Schrägsitzventil o.E.","Schrägsitzventil m.E.","KFR-Ventil o.E.","KFR-Ventil m.E.","Wasserzählerbügel","Ventiloberteil","KFR-Ventiloberteil","Zapfhahn","Kugelhahn / KFE-Hahn","Steckschieber","Gewindeschieber","Flanschschieber","Schiebergestänge","Friagrip","Multi-Joint","Hauseinführung"],"dimensions":["DN15","DN20","DN25","DN32","DN40","DN50","DN65","DN80","DN100"]},"Sonstiges":{"items":["Rohrschellen","Stockschrauben - M8","Wasserfilter","Filterverschraubung","Brunnenschaum","Straßenkappe für Hausanschluss","Unterlegplatte für Straßenkappe","KG Rohr für Gestänge"],"dimensions":["ohne Dimension"]}};const KEY='materialnachweis-preise-katalog-v1',$=id=>document.getElementById(id);let prices={};try{prices=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}function key(g,m,d,d2=''){return [g,m,d||'',d2||''].join('||')}function specialDims(group,item){
   const pe=["Plasson PE","Isiflo Ecoline PE","Isiflo Messing PE"];
   if(["Edelstahl","Kupfer"].includes(group) && ["Ü-Nippel","Ü-Muffe"].includes(item))
     return {from:["18 mm","22 mm","28 mm","35 mm","42 mm","54 mm"],to:['3/4"','1"','1 1/4"','1 1/2"']};
@@ -39,26 +67,49 @@
     };
   return null;
 }
-function fillGroups(){$('g').innerHTML=Object.keys(DATA).map(x=>`<option value="${x}">${x}</option>`).join('');fillItems()}function fillItems(){const g=$('g').value,c=DATA[g]||{};$('m').innerHTML=(c.items||[]).map(x=>`<option value="${x}">${x}</option>`).join('');render()}function render(){
+function fillGroups(){$('g').innerHTML=Object.keys(DATA).map(x=>`<option value="${x}">${x}</option>`).join('');fillItems()}function fillItems(){const g=$('g').value,c=DATA[g]||{};$('m').innerHTML=(c.items||[]).map(x=>`<option value="${x}">${x}</option>`).join('');render()}function priceDimensionKey(m,from,to){
+  return m==="Schiebergestänge" ? from+' · RD '+to : from+' × '+to;
+}
+function render(){
  const g=$('g').value,m=$('m').value,c=DATA[g]||{},sp=specialDims(g,m);
- let entries=[];
  if(sp){
-   for(const from of sp.from){
-     for(const to of sp.to){
-       const d=(m==="Schiebergestänge")?from+' · RD '+to:from+' × '+to;
-       entries.push({d,label:(sp.fromLabel||'Dimension von')+': '+from+' · '+(sp.toLabel||'Dimension auf')+': '+to});
-     }
-   }
+   $('editor').innerHTML=sp.from.map((from,idx)=>{
+     const selectId='to_'+idx, inputId='price_'+idx;
+     const options=sp.to.map(to=>`<option value="${to}">${to}</option>`).join('');
+     return `<div class="row"><div><strong>${m}</strong><div class="meta">${g}</div><div style="margin-top:8px"><label>${sp.fromLabel||'Dimension von'}</label><div><strong>${from}</strong></div></div></div><div><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice('${selectId}','${inputId}')">${options}</select><label style="margin-top:8px">Einzelpreis €</label><div class="price-input-actions"><input id="${inputId}" inputmode="decimal"><button type="button" onclick="saveComboPrice('${selectId}','${inputId}')">Übernehmen</button></div></div></div>`
+   }).join('');
+   sp.from.forEach((_,idx)=>loadComboPrice('to_'+idx,'price_'+idx));
  }else{
    const dims=(c.dimensions&&c.dimensions.length)?c.dimensions:[''];
-   entries=dims.map(d=>({d,label:d||'ohne Dimension'}));
+   $('editor').innerHTML=dims.map(d=>{
+     const k=key(g,m,d),v=prices[k]??'';
+     return `<div class="row"><div><strong>${m}</strong><div class="meta">${g} · ${d||'ohne Dimension'}</div></div><div><label>Einzelpreis €</label><div class="price-input-actions"><input inputmode="decimal" value="${v}" data-k="${k}"><button type="button" onclick="setPrice(this.previousElementSibling)">Übernehmen</button></div></div></div>`
+   }).join('');
  }
- $('editor').innerHTML=entries.map(x=>{
-   const k=key(g,m,x.d),v=prices[k]??'';
-   return `<div class="row"><div><strong>${m}</strong><div class="meta">${g} · ${x.label}</div></div><div><label>Einzelpreis €</label><div class="price-input-actions"><input inputmode="decimal" value="${v}" data-k="${k}"><button type="button" onclick="setPrice(this.previousElementSibling)">Übernehmen</button></div></div></div>`
- }).join('')
 }
-function setPrice(el){const v=String(el.value||'').trim().replace('.',',');if(v==='')delete prices[el.dataset.k];else prices[el.dataset.k]=v;localStorage.setItem(KEY,JSON.stringify(prices));prices=JSON.parse(localStorage.getItem(KEY)||'{}');el.value=prices[el.dataset.k]??'';$('saved').style.display='block';setTimeout(()=>$('saved').style.display='none',1800)}const RATEKEY='materialnachweis-stundensaetze-v1';let rates={};try{rates=JSON.parse(localStorage.getItem(RATEKEY)||'{}')||{}}catch(e){}
-function saveRate(name,v){v=String(v||'').trim().replace('.',',');if(v==='')delete rates[name];else rates[name]=v;localStorage.setItem(RATEKEY,JSON.stringify(rates));rates=JSON.parse(localStorage.getItem(RATEKEY)||'{}');loadRates();$('rateSaved').style.display='block';setTimeout(()=>$('rateSaved').style.display='none',1800)}
+function loadComboPrice(selectId,inputId){
+ const g=$('g').value,m=$('m').value,sel=$(selectId),inp=$(inputId);
+ const d=priceDimensionKey(m,sel.dataset.from,sel.value);
+ inp.dataset.k=key(g,m,d);
+ inp.value=prices[inp.dataset.k]??'';
+}
+function saveComboPrice(selectId,inputId){
+ loadComboPrice(selectId,inputId);
+ setPrice($(inputId));
+}
+function formatMoneyInput(v){
+  v=String(v??'').trim().replace(/\s/g,'').replace('.',',');
+  if(v==='') return '';
+  const parts=v.split(',');
+  const whole=parts[0]||'0';
+  let dec=(parts[1]||'').replace(/\D/g,'');
+  if(parts.length===1 || dec.length===0) dec='00';
+  else if(dec.length===1) dec+='0';
+  else dec=dec.slice(0,2);
+  return whole+','+dec;
+}
+function setPrice(el){const v=formatMoneyInput(el.value);if(v==='')delete prices[el.dataset.k];else prices[el.dataset.k]=v;localStorage.setItem(KEY,JSON.stringify(prices));prices=JSON.parse(localStorage.getItem(KEY)||'{}');el.value=prices[el.dataset.k]??'';$('saved').style.display='block';setTimeout(()=>$('saved').style.display='none',1800)}
+function saveRate(name,v){v=formatMoneyInput(v);if(v==='')delete rates[name];else rates[name]=v;localStorage.setItem(RATEKEY,JSON.stringify(rates));rates=JSON.parse(localStorage.getItem(RATEKEY)||'{}');loadRates();$('rateSaved').style.display='block';setTimeout(()=>$('rateSaved').style.display='none',1800)}
 function loadRates(){$('rateMarco').value=rates['Herr Marco Kreisz']??'';$('rateRoth').value=rates['Herr Tobias Roth']??'';$('rateKoehler').value=rates['Herr Tobias Köhler']??''}
-$('g').onchange=fillItems;$('m').onchange=render;fillGroups();loadRates();</script></body></html>
+$('g').onchange=fillItems;$('m').onchange=render;fillGroups();loadRates();</script><div class="fixed-back-bar"><a class="fixed-back-button" href="index.html">← Zurück zum Materialnachweis</a></div>
+</body></html>
