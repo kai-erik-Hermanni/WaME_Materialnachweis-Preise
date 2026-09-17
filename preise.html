@@ -29,7 +29,47 @@
 body{padding-bottom:82px!important;}
 @media print{.fixed-back-bar{display:none!important;} body{padding-bottom:0!important;}}
 
-</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.10</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
+
+.combo-price-row{grid-template-columns:minmax(150px,1fr) minmax(0,2.5fr)!important;align-items:center!important}
+.combo-fields{display:flex;align-items:flex-end;gap:7px;min-width:0}
+.combo-dim,.combo-price{display:flex;flex-direction:column;gap:3px}
+.combo-dim strong{display:flex;align-items:center;min-height:44px;white-space:nowrap}
+.combo-to{margin-left:-2px}
+.combo-dim select{width:105px;min-width:105px}
+.combo-price input{width:92px;min-width:82px}
+.combo-save{min-height:44px;white-space:nowrap;border:0;border-radius:8px;background:#111827;color:#fff;font-weight:700;padding:0 12px}
+@media(max-width:700px){
+ .combo-price-row{grid-template-columns:1fr!important}
+ .combo-fields{gap:5px;overflow-x:auto;padding-bottom:2px}
+ .combo-name{margin-bottom:3px}
+ .combo-dim select{width:96px;min-width:96px}
+ .combo-price input{width:82px;min-width:82px}
+ .combo-save{padding:0 9px}
+}
+
+
+.combo-price{flex:0 0 92px!important;min-width:92px!important}
+.combo-price-input{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:92px!important;
+  min-width:92px!important;
+  max-width:92px!important;
+  height:44px!important;
+  padding:8px 9px!important;
+  position:relative!important;
+  z-index:3!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  background:#fff!important;
+  color:#111827!important;
+  -webkit-text-fill-color:#111827!important;
+  opacity:1!important;
+}
+.combo-save{position:relative!important;z-index:2!important;flex:0 0 auto!important}
+.combo-fields{position:relative!important}
+
+</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.12</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
 <p class="meta">Interne Stundensätze für die Berechnung der Arbeitskosten.</p>
 <div class="row"><div><strong>Herr Marco Kreisz</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateMarco" inputmode="decimal"><button type="button" onclick="saveRate('Herr Marco Kreisz',$('rateMarco').value)">Übernehmen</button></div></div></div>
 <div class="row"><div><strong>Herr Tobias Roth</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateRoth" inputmode="decimal"><button type="button" onclick="saveRate('Herr Tobias Roth',$('rateRoth').value)">Übernehmen</button></div></div></div>
@@ -76,7 +116,7 @@ function render(){
    $('editor').innerHTML=sp.from.map((from,idx)=>{
      const selectId='to_'+idx, inputId='price_'+idx;
      const options=sp.to.map(to=>`<option value="${to}">${to}</option>`).join('');
-     return `<div class="row"><div><strong>${m}</strong><div class="meta">${g}</div><div style="margin-top:8px"><label>${sp.fromLabel||'Dimension von'}</label><div><strong>${from}</strong></div></div></div><div><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice('${selectId}','${inputId}')">${options}</select><label style="margin-top:8px">Einzelpreis €</label><div class="price-input-actions"><input id="${inputId}" inputmode="decimal"><button type="button" onclick="saveComboPrice('${selectId}','${inputId}')">Übernehmen</button></div></div></div>`
+     return `<div class="row combo-price-row"><div class="combo-name"><strong>${m}</strong><div class="meta">${g}</div></div><div class="combo-fields"><div class="combo-dim"><label>${sp.fromLabel||'Dimension von'}</label><strong>${from}</strong></div><div class="combo-dim combo-to"><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice('${selectId}','${inputId}')">${options}</select></div><div class="combo-price"><label>Einzelpreis €</label><input id="${inputId}" class="combo-price-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00"></div><button class="combo-save" type="button" onclick="saveComboPrice('${selectId}','${inputId}')">Übernehmen</button></div></div>`
    }).join('');
    sp.from.forEach((_,idx)=>loadComboPrice('to_'+idx,'price_'+idx));
  }else{
@@ -108,7 +148,7 @@ function formatMoneyInput(v){
   else dec=dec.slice(0,2);
   return whole+','+dec;
 }
-function setPrice(el){const v=formatMoneyInput(el.value);if(v==='')delete prices[el.dataset.k];else prices[el.dataset.k]=v;localStorage.setItem(KEY,JSON.stringify(prices));prices=JSON.parse(localStorage.getItem(KEY)||'{}');el.value=prices[el.dataset.k]??'';$('saved').style.display='block';setTimeout(()=>$('saved').style.display='none',1800)}
+function setPrice(el){if(!el||!el.dataset.k){return;}const v=formatMoneyInput(el.value);if(v==='')delete prices[el.dataset.k];else prices[el.dataset.k]=v;localStorage.setItem(KEY,JSON.stringify(prices));prices=JSON.parse(localStorage.getItem(KEY)||'{}');el.value=prices[el.dataset.k]??'';$('saved').style.display='block';setTimeout(()=>$('saved').style.display='none',1800)}
 function saveRate(name,v){v=formatMoneyInput(v);if(v==='')delete rates[name];else rates[name]=v;localStorage.setItem(RATEKEY,JSON.stringify(rates));rates=JSON.parse(localStorage.getItem(RATEKEY)||'{}');loadRates();$('rateSaved').style.display='block';setTimeout(()=>$('rateSaved').style.display='none',1800)}
 function loadRates(){$('rateMarco').value=rates['Herr Marco Kreisz']??'';$('rateRoth').value=rates['Herr Tobias Roth']??'';$('rateKoehler').value=rates['Herr Tobias Köhler']??''}
 $('g').onchange=fillItems;$('m').onchange=render;fillGroups();loadRates();</script><div class="fixed-back-bar"><a class="fixed-back-button" href="index.html">← Zurück zum Materialnachweis</a></div>
