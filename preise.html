@@ -80,7 +80,7 @@ body{padding-bottom:82px!important;}
 }
 .combo-confirm.show{display:inline-block}
 
-</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.20</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
+</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.22</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
 <p class="meta">Interne Stundensätze für die Berechnung der Arbeitskosten.</p>
 <div class="row"><div><strong>Herr Marco Kreisz</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateMarco" inputmode="decimal"><button type="button" onclick="saveRate('Herr Marco Kreisz',$('rateMarco').value)">Übernehmen</button></div></div></div>
 <div class="row"><div><strong>Herr Tobias Roth</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateRoth" inputmode="decimal"><button type="button" onclick="saveRate('Herr Tobias Roth',$('rateRoth').value)">Übernehmen</button></div></div></div>
@@ -136,17 +136,33 @@ function priceDimensionKey(m,from,to){
 function comboKey(g,m,from,to){
   return key(g,m,priceDimensionKey(m,from,to));
 }
+const COMBO_SELECTION_KEY='materialnachweis-preise-auswahl-v1';
+function readComboSelections(){
+ try{return JSON.parse(localStorage.getItem(COMBO_SELECTION_KEY)||'{}')||{}}catch(e){return {}}
+}
+function comboSelectionKey(g,m,from){return [g,m,from].join('||')}
+function rememberComboSelection(sel){
+ if(!sel)return;
+ const row=sel.closest('.combo-price-row');
+ const g=$('g').value,m=$('m').value,from=sel.dataset.from;
+ const state=readComboSelections();
+ state[comboSelectionKey(g,m,from)]=sel.value;
+ localStorage.setItem(COMBO_SELECTION_KEY,JSON.stringify(state));
+ loadComboPrice(sel);
+}
 function render(){
  try{prices=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){prices={}}
  const g=$('g').value,m=$('m').value,c=DATA[g]||{},sp=specialDims(g,m);
  if(sp){
    $('editor').innerHTML=sp.from.map((from,idx)=>{
      const selectId='to_'+idx, inputId='price_'+idx;
-     const options=sp.to.map(to=>`<option value="${to}">${to}</option>`).join('');
-     const firstTo=sp.to[0];
-     const k=comboKey(g,m,from,firstTo);
+     const state=readComboSelections();
+     const savedTo=state[comboSelectionKey(g,m,from)];
+     const activeTo=sp.to.includes(savedTo)?savedTo:sp.to[0];
+     const options=sp.to.map(to=>`<option value="${to}"${to===activeTo?' selected':''}>${to}</option>`).join('');
+     const k=comboKey(g,m,from,activeTo);
      const v=prices[k]??'';
-     return `<div class="row combo-price-row"><div class="combo-name"><strong>${m}</strong><div class="meta">${g}</div></div><div class="combo-fields"><div class="combo-dim"><label>${sp.fromLabel||'Dimension von'}</label><strong>${from}</strong></div><div class="combo-dim combo-to"><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice(this)">${options}</select></div><div class="combo-price"><label>Einzelpreis €</label><input id="${inputId}" class="combo-price-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00" data-k="${k}" value="${v}"></div><button class="combo-save" type="button" onclick="saveComboPrice(this)">Übernehmen</button><span class="combo-confirm" aria-live="polite"></span></div></div>`
+     return `<div class="row combo-price-row"><div class="combo-name"><strong>${m}</strong><div class="meta">${g}</div></div><div class="combo-fields"><div class="combo-dim"><label>${sp.fromLabel||'Dimension von'}</label><strong>${from}</strong></div><div class="combo-dim combo-to"><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="rememberComboSelection(this)">${options}</select></div><div class="combo-price"><label>Einzelpreis €</label><input id="${inputId}" class="combo-price-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00" data-k="${k}" value="${v}"></div><button class="combo-save" type="button" onclick="saveComboPrice(this)">Übernehmen</button><span class="combo-confirm" aria-live="polite"></span></div></div>`
    }).join('');
  }else{
    const dims=(c.dimensions&&c.dimensions.length)?c.dimensions:[''];
@@ -173,7 +189,10 @@ function saveComboPrice(buttonEl){
  const sel=row?row.querySelector('select'):null,inp=row?row.querySelector('.combo-price-input'):null;
  const confirm=row?row.querySelector('.combo-confirm'):null;
  if(!sel||!inp)return;
- const k=comboKey($('g').value,$('m').value,sel.dataset.from,sel.value);
+ const g=$('g').value,m=$('m').value;
+ const state=readComboSelections();state[comboSelectionKey(g,m,sel.dataset.from)]=sel.value;
+ localStorage.setItem(COMBO_SELECTION_KEY,JSON.stringify(state));
+ const k=comboKey(g,m,sel.dataset.from,sel.value);
  const v=formatMoneyInput(inp.value);
  if(v==='')delete prices[k];else prices[k]=v;
  localStorage.setItem(KEY,JSON.stringify(prices));
