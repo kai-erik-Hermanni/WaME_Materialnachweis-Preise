@@ -69,7 +69,7 @@ body{padding-bottom:82px!important;}
 .combo-save{position:relative!important;z-index:2!important;flex:0 0 auto!important}
 .combo-fields{position:relative!important}
 
-</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.12</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
+</style></head><body><header><div><h1>Interne Preisverwaltung</h1><small>Materialnachweis+Preise V1.13</small></div></header><main><div class="warning">INTERNE PREISVERWALTUNG – diese Seite ist nicht für Kunden bestimmt.</div><section class="card"><div class="toolbar"><div><label>Materialgruppe</label><select id="g"></select></div><div><label>Bezeichnung</label><select id="m"></select></div></div><div id="editor"></div><div class="saved" id="saved" style="display:none">Preis übernommen und gespeichert.</div></section><section class="card" style="margin-top:16px"><h2>Stundensätze</h2>
 <p class="meta">Interne Stundensätze für die Berechnung der Arbeitskosten.</p>
 <div class="row"><div><strong>Herr Marco Kreisz</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateMarco" inputmode="decimal"><button type="button" onclick="saveRate('Herr Marco Kreisz',$('rateMarco').value)">Übernehmen</button></div></div></div>
 <div class="row"><div><strong>Herr Tobias Roth</strong></div><div><label>€/Std.</label><div class="price-input-actions"><input id="rateRoth" inputmode="decimal"><button type="button" onclick="saveRate('Herr Tobias Roth',$('rateRoth').value)">Übernehmen</button></div></div></div>
@@ -110,15 +110,20 @@ body{padding-bottom:82px!important;}
 function fillGroups(){$('g').innerHTML=Object.keys(DATA).map(x=>`<option value="${x}">${x}</option>`).join('');fillItems()}function fillItems(){const g=$('g').value,c=DATA[g]||{};$('m').innerHTML=(c.items||[]).map(x=>`<option value="${x}">${x}</option>`).join('');render()}function priceDimensionKey(m,from,to){
   return m==="Schiebergestänge" ? from+' · RD '+to : from+' × '+to;
 }
+function comboKey(g,m,from,to){
+  return key(g,m,priceDimensionKey(m,from,to));
+}
 function render(){
  const g=$('g').value,m=$('m').value,c=DATA[g]||{},sp=specialDims(g,m);
  if(sp){
    $('editor').innerHTML=sp.from.map((from,idx)=>{
      const selectId='to_'+idx, inputId='price_'+idx;
      const options=sp.to.map(to=>`<option value="${to}">${to}</option>`).join('');
-     return `<div class="row combo-price-row"><div class="combo-name"><strong>${m}</strong><div class="meta">${g}</div></div><div class="combo-fields"><div class="combo-dim"><label>${sp.fromLabel||'Dimension von'}</label><strong>${from}</strong></div><div class="combo-dim combo-to"><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice('${selectId}','${inputId}')">${options}</select></div><div class="combo-price"><label>Einzelpreis €</label><input id="${inputId}" class="combo-price-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00"></div><button class="combo-save" type="button" onclick="saveComboPrice('${selectId}','${inputId}')">Übernehmen</button></div></div>`
+     const firstTo=sp.to[0];
+     const k=comboKey(g,m,from,firstTo);
+     const v=prices[k]??'';
+     return `<div class="row combo-price-row"><div class="combo-name"><strong>${m}</strong><div class="meta">${g}</div></div><div class="combo-fields"><div class="combo-dim"><label>${sp.fromLabel||'Dimension von'}</label><strong>${from}</strong></div><div class="combo-dim combo-to"><label>${sp.toLabel||'Dimension auf'}</label><select id="${selectId}" data-from="${from}" onchange="loadComboPrice('${selectId}','${inputId}')">${options}</select></div><div class="combo-price"><label>Einzelpreis €</label><input id="${inputId}" class="combo-price-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="0,00" data-k="${k}" value="${v}"></div><button class="combo-save" type="button" onclick="saveComboPrice('${selectId}','${inputId}')">Übernehmen</button></div></div>`
    }).join('');
-   sp.from.forEach((_,idx)=>loadComboPrice('to_'+idx,'price_'+idx));
  }else{
    const dims=(c.dimensions&&c.dimensions.length)?c.dimensions:[''];
    $('editor').innerHTML=dims.map(d=>{
@@ -129,24 +134,20 @@ function render(){
 }
 function loadComboPrice(selectId,inputId){
  const g=$('g').value,m=$('m').value,sel=$(selectId),inp=$(inputId);
- const d=priceDimensionKey(m,sel.dataset.from,sel.value);
- inp.dataset.k=key(g,m,d);
- inp.value=prices[inp.dataset.k]??'';
+ if(!sel||!inp)return;
+ const k=comboKey(g,m,sel.dataset.from,sel.value);
+ inp.dataset.k=k;
+ inp.value=prices[k]??'';
+ inp.title=inp.value ? 'Gespeichert: '+inp.value+' €' : 'Noch kein Preis gespeichert';
 }
 function saveComboPrice(selectId,inputId){
- loadComboPrice(selectId,inputId);
- setPrice($(inputId));
-}
-function formatMoneyInput(v){
-  v=String(v??'').trim().replace(/\s/g,'').replace('.',',');
-  if(v==='') return '';
-  const parts=v.split(',');
-  const whole=parts[0]||'0';
-  let dec=(parts[1]||'').replace(/\D/g,'');
-  if(parts.length===1 || dec.length===0) dec='00';
-  else if(dec.length===1) dec+='0';
-  else dec=dec.slice(0,2);
-  return whole+','+dec;
+ const g=$('g').value,m=$('m').value,sel=$(selectId),inp=$(inputId);
+ if(!sel||!inp)return;
+ const k=comboKey(g,m,sel.dataset.from,sel.value);
+ inp.dataset.k=k;
+ setPrice(inp);
+ // Read back exact stored value so the saved price is visibly confirmed.
+ inp.value=prices[k]??'';
 }
 function setPrice(el){if(!el||!el.dataset.k){return;}const v=formatMoneyInput(el.value);if(v==='')delete prices[el.dataset.k];else prices[el.dataset.k]=v;localStorage.setItem(KEY,JSON.stringify(prices));prices=JSON.parse(localStorage.getItem(KEY)||'{}');el.value=prices[el.dataset.k]??'';$('saved').style.display='block';setTimeout(()=>$('saved').style.display='none',1800)}
 function saveRate(name,v){v=formatMoneyInput(v);if(v==='')delete rates[name];else rates[name]=v;localStorage.setItem(RATEKEY,JSON.stringify(rates));rates=JSON.parse(localStorage.getItem(RATEKEY)||'{}');loadRates();$('rateSaved').style.display='block';setTimeout(()=>$('rateSaved').style.display='none',1800)}
