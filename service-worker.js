@@ -1,4 +1,4 @@
-const CACHE='materialnachweis-preise-v1-85';
+const CACHE='materialnachweis-preise-v1-86';
 const ASSETS=['./','./index.html','./manifest.json','./preise.html'];
 self.addEventListener('install',event=>{
  self.skipWaiting();
